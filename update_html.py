@@ -4,14 +4,14 @@ from datetime import datetime
 CSV_FILE = "teamwater_progress.csv"
 HTML_FILE = "docs/index.html"
 
-# Load latest value
+# Load latest data from CSV
 df = pd.read_csv(CSV_FILE, parse_dates=["timestamp"])
 latest = df.sort_values("timestamp").iloc[-1]
 
 amount = f"${latest['amount']:,.2f}"
 timestamp = latest["timestamp"].strftime("%Y-%m-%d %H:%M:%S UTC")
 
-# Write HTML
+# Write the full HTML file
 with open(HTML_FILE, "w") as f:
     f.write(f"""<!DOCTYPE html>
 <html lang="en">
@@ -19,12 +19,19 @@ with open(HTML_FILE, "w") as f:
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>TeamWater Worm Chart</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
 </head>
 <body>
   <h1>💧 TeamWater Fundraising Worm Chart</h1>
   <p><strong>Latest total:</strong> {amount}</p>
   <p><strong>Last updated:</strong> {timestamp}</p>
   <p>Updated every 10 minutes from <a href="https://teamwater.org/">teamwater.org</a></p>
-  <img src="worm_chart.png" alt="Worm Chart" style="max-width: 100%; height: auto;" />
+  <img src="worm_chart.png" alt="Worm Chart" />
+
+  <footer>
+    <img src="https://cdn.pushfar.com/assets/static/logos/logo-wateraid.png" alt="WaterAid Logo" style="max-width: 200px;" />
+  </footer>
 </body>
-</html>""")
+</html>
+""")
