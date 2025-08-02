@@ -62,5 +62,9 @@ jobs:
           git add teamwater_progress.csv worm_chart.png docs/worm_chart.png
           git commit -m "Update chart and data" || echo "No changes"
           git push https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }} HEAD:main
+      - name: Update HTML with latest total
+        run: |
+          python update_html.py
+
 
 
