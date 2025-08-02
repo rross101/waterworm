@@ -21,6 +21,8 @@ with open(HTML_FILE, "w") as f:
   <title>TeamWater Worm Chart</title>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
+  <meta http-equiv="refresh" content="120"> <!-- every 2 minutes -->
+
 </head>
 <body>
   <h1>💧 TeamWater Fundraising Worm Chart</h1>
@@ -32,6 +34,16 @@ with open(HTML_FILE, "w") as f:
   <footer>
     <img src="https://cdn.pushfar.com/assets/static/logos/logo-wateraid.png" alt="WaterAid Logo" style="max-width: 200px;" />
   </footer>
+  <script>
+  const chart = document.querySelector('img[alt="Worm Chart"]');
+
+  setInterval(() => {
+    const timestamp = new Date().getTime();
+    chart.src = `worm_chart.png?cachebust=${timestamp}`;
+  }, 30000); // every 30 seconds
+  </script>
 </body>
 </html>
+
+
 """)
