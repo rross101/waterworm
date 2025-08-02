@@ -39,6 +39,7 @@ jobs:
         run: |
           pip install matplotlib pandas
           python generate_chart.py
+          cp worm_chart.png docs/
       - name: Commit updated chart and data
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -58,7 +59,8 @@ jobs:
         run: |
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
-          git add teamwater_progress.csv worm_chart.png
-          git commit -m "Update chart and CSV" || echo "No changes"
+          git add teamwater_progress.csv worm_chart.png docs/worm_chart.png
+          git commit -m "Update chart and data" || echo "No changes"
           git push https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }} HEAD:main
+
 
