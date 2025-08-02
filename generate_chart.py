@@ -1,6 +1,7 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 from datetime import datetime
+import matplotlib.ticker as mticker
 
 CSV_FILE = "teamwater_progress.csv"
 OUTPUT_FILE = "worm_chart.png"
@@ -25,12 +26,37 @@ def plot_worm_chart():
     amounts = df["amount"]
 
     plt.figure(figsize=(10, 6))
-    plt.plot(days, amounts, marker="o", label="TeamWater Progress")
-    plt.plot([0, (GOAL_DATE - START_DATE).days], [0, GOAL_AMOUNT], "k--", label="Target")
-    plt.title("TeamWater Fundraising Worm Chart")
+    ax = plt.gca()
+    ax.set_facecolor("#f0f8ff")  # Subtle blue background
+
+    # Custom color palette
+    plt.plot(days, amounts, marker="o", color="#009edb", label="TeamWater Progress")
+    plt.plot([0, (GOAL_DATE - START_DATE).days], [0, GOAL_AMOUNT], "r--", label="Target")
+
+    # Annotate latest data point
+    if len(days) > 0:
+        plt.annotate(
+            f"${amounts.iloc[-1]:,.0f}",
+            (days.iloc[-1], amounts.iloc[-1]),
+            textcoords="offset points",
+            xytext=(0, 10),
+            ha='center',
+            color="#009edb",
+            fontsize=12,
+            fontweight='bold'
+        )
+
+    # Improve axis formatting
+    ax.yaxis.set_major_formatter(mticker.FuncFormatter(lambda x, _: f"${int(x):,}"))
+    plt.ylim(0, GOAL_AMOUNT * 1.1)
+
+    # Add subtitle/context
+    plt.title("TeamWater Fundraising Worm Chart", fontsize=18, fontweight='bold')
+    plt.suptitle("Goal: $40,000,000 by August 31, 2025", fontsize=12, color="gray", y=0.93)
+
     plt.xlabel("Days since Aug 1")
     plt.ylabel("Amount Raised (USD)")
-    plt.grid(True)
+    plt.grid(True, color="#cccccc", linestyle="--", linewidth=0.7)
     plt.legend()
     plt.tight_layout()
     plt.savefig(OUTPUT_FILE)
