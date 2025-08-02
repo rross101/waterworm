@@ -1,4 +1,4 @@
-name: Scrape TeamWater
+name: Scrape TeamWater and update chart
 
 on:
   schedule:
