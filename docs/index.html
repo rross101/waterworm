@@ -6,16 +6,30 @@
   <title>TeamWater Worm Chart</title>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
+  <meta http-equiv="refresh" content="120"> <!-- every 2 minutes -->
+
 </head>
 <body>
   <h1>💧 TeamWater Fundraising Worm Chart</h1>
-  <p><strong>Latest total:</strong> $6,212,088.00</p>
-  <p><strong>Last updated:</strong> 2025-08-02 19:21:05 UTC</p>
+  <div class="latest-total">
+    <p><strong>Latest total:</strong> $6,214,683.00</p>
+  </div>
+  <p><strong>Last updated:</strong> 2025-08-02 19:36:53 UTC</p>
   <p>Updated every 10 minutes from <a href="https://teamwater.org/">teamwater.org</a></p>
   <img src="worm_chart.png" alt="Worm Chart" />
 
   <footer>
     <img src="https://cdn.pushfar.com/assets/static/logos/logo-wateraid.png" alt="WaterAid Logo" style="max-width: 200px;" />
   </footer>
+  <script>
+  const chart = document.querySelector('img[alt="Worm Chart"]');
+
+  setInterval(() => {
+    const timestamp = new Date().getTime();
+    chart.src = `worm_chart.png?cachebust=${timestamp}`;
+  }, 30000); // every 30 seconds
+  </script>
 </body>
 </html>
+
+
