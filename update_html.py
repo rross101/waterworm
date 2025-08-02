@@ -39,10 +39,10 @@ with open(HTML_FILE, "w") as f:
   <script>
   const chart = document.querySelector('img[alt="Worm Chart"]');
 
-  setInterval(() => {
+  setInterval(() => {{
     const timestamp = new Date().getTime();
-    chart.src = `worm_chart.png?cachebust=${timestamp}`;
-  }, 30000); // every 30 seconds
+    chart.src = `worm_chart.png?cachebust=${{timestamp}}`;
+  }}, 30000); // every 30 seconds
   </script>
 </body>
 </html>
