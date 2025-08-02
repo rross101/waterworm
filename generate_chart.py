@@ -52,7 +52,6 @@ def plot_worm_chart():
 
     # Add subtitle/context
     plt.title("TeamWater Fundraising Worm Chart", fontsize=18, fontweight='bold')
-    plt.suptitle("Goal: $40,000,000 by August 31, 2025", fontsize=12, color="gray", y=0.93)
 
     plt.xlabel("Days since Aug 1")
     plt.ylabel("Amount Raised (USD)")
