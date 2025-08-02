@@ -26,7 +26,9 @@ with open(HTML_FILE, "w") as f:
 </head>
 <body>
   <h1>💧 TeamWater Fundraising Worm Chart</h1>
-  <p><strong>Latest total:</strong> {amount}</p>
+  <div class="latest-total">
+    <p><strong>Latest total:</strong> {amount}</p>
+  </div>
   <p><strong>Last updated:</strong> {timestamp}</p>
   <p>Updated every 10 minutes from <a href="https://teamwater.org/">teamwater.org</a></p>
   <img src="worm_chart.png" alt="Worm Chart" />
