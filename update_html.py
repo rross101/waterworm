@@ -2,6 +2,7 @@ import pandas as pd
 from datetime import datetime
 
 CSV_FILE = "teamwater_progress.csv"
+TEMPLATE_FILE = "docs/template.html"
 HTML_FILE = "docs/index.html"
 
 # Load latest data from CSV
@@ -11,41 +12,11 @@ latest = df.sort_values("timestamp").iloc[-1]
 amount = f"${latest['amount']:,.2f}"
 timestamp = latest["timestamp"].strftime("%Y-%m-%d %H:%M:%S UTC")
 
-# Write the full HTML file
+# Read template and replace placeholders
+with open(TEMPLATE_FILE) as f:
+    template = f.read()
+
+html = template.replace("{{amount}}", amount).replace("{{timestamp}}", timestamp)
+
 with open(HTML_FILE, "w") as f:
-    f.write(f"""<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>TeamWater Worm Chart</title>
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css">
-  <meta http-equiv="refresh" content="120"> <!-- every 2 minutes -->
-
-</head>
-<body>
-  <h1>💧 TeamWater Fundraising Worm Chart</h1>
-  <div class="latest-total">
-    <p><strong>Latest total:</strong> {amount}</p>
-  </div>
-  <p><strong>Last updated:</strong> {timestamp}</p>
-  <p>Updated every 10 minutes from <a href="https://teamwater.org/">teamwater.org</a></p>
-  <img src="worm_chart.png" alt="Worm Chart" />
-
-  <footer>
-    <img src="https://cdn.pushfar.com/assets/static/logos/logo-wateraid.png" alt="WaterAid Logo" style="max-width: 200px;" />
-  </footer>
-  <script>
-  const chart = document.querySelector('img[alt="Worm Chart"]');
-
-  setInterval(() => {{
-    const timestamp = new Date().getTime();
-    chart.src = `worm_chart.png?cachebust=${{timestamp}}`;
-  }}, 30000); // every 30 seconds
-  </script>
-</body>
-</html>
-
-
-""")
+    f.write(html)
