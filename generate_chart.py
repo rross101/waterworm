@@ -9,7 +9,7 @@ OUTPUT_FILE = "worm_chart.png"
 # Fundraising goal
 GOAL_AMOUNT = 40_000_000
 GOAL_DATE = datetime(2025, 8, 31)
-START_DATE = datetime(2025, 8, 1)
+START_DATE = datetime(2025, 8, 1, 17, 0, 0)
 
 def plot_worm_chart():
     df = pd.read_csv(CSV_FILE, parse_dates=["timestamp"])
@@ -30,7 +30,7 @@ def plot_worm_chart():
     ax.set_facecolor("#f0f8ff")  # Subtle blue background
 
     # Custom color palette
-    plt.plot(days, amounts, marker="o", color="#009edb", label="TeamWater Progress")
+    plt.plot(days, amounts, color="#009edb", label="TeamWater Progress", linewidth=4)
     plt.plot([0, (GOAL_DATE - START_DATE).days], [0, GOAL_AMOUNT], "r--", label="Target")
 
     # Annotate latest data point
