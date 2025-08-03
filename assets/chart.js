@@ -43,10 +43,10 @@ function initChart() {
 
   // current total text (top-right, outside plotting area)
   totalText = svg.append("text")
-    .attr("x", width + margin.left + margin.right - 10)
+    .attr("x", width + margin.left + margin.right - 100)
     .attr("y", margin.top - 10)
     .attr("text-anchor", "end")
-    .attr("font-size", "16px")
+    .attr("font-size", "64px")
     .attr("fill", "white");
 
   // static target line
@@ -59,7 +59,7 @@ function initChart() {
   progressLine = g.append("path")
     .attr("fill", "none")
     .attr("stroke", "white")
-    .attr("stroke-width", 2);
+    .attr("stroke-width", 6);
 }
 
 function updateChart(data) {
@@ -78,6 +78,7 @@ function updateChart(data) {
       .attr("transform", "rotate(-45)")
       .attr("dx", "-0.6em")
       .attr("dy", "0.2em");
+      .style("font-size", "2em");
 
   yAxis.call(
     d3.axisLeft(yScale)
