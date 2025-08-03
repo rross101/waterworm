@@ -8,22 +8,46 @@ const svg = d3.select("#chart"),
 
 // clear SVG & attach group
 svg.selectAll("*").remove();
+
+// add defs for glow effect on target line
+const defs = svg.append("defs");
+defs.append("filter")
+    .attr("id", "glow")
+  .append("feDropShadow")
+    .attr("stdDeviation", 3)
+    .attr("flood-color", "#FF6F61")
+    .attr("flood-opacity", 0.6);
+
 const g = svg
   .attr("viewBox", `0 0 ${width + margin.left + margin.right} ${height + margin.top + margin.bottom}`)
   .append("g")
   .attr("transform", `translate(${margin.left},${margin.top})`);
 
+// create a hidden tooltip div
+const tooltip = d3.select("body").append("div")
+  .style("position", "absolute")
+  .style("pointer-events", "none")
+  .style("padding", "0.4em 0.6em")
+  .style("background", "rgba(0,0,0,0.7)")
+  .style("color", "#fff")
+  .style("border-radius", "4px")
+  .style("font-size", "0.9em")
+  .style("visibility", "hidden");
+
 // parser for timestamp strings
-const parseTime = d3.timeParse("2025-%m-%d %H:%M:%S".replace("2025-", "%Y-")); // ensure correct format
+const parseTime = d3.timeParse("2025-%m-%d %H:%M:%S".replace("2025-", "%Y-"));
+
 // set your goal total here (40 million)
 const targetTotal = 40_000_000;
+
 // force the x-axis to end at August 31, 2025
 const forcedEndDate = d3.timeParse("%Y-%m-%d %H:%M:%S")("2025-08-31 23:59:59");
+
 // interval in milliseconds (e.g., every 5 minutes)
 const refreshInterval = 5 * 60 * 1000;
 
 // scales, axes and lines in outer scope
-let xScale, yScale, xAxis, yAxis, progressLine, targetLine, totalText;
+let xScale, yScale, xAxis, yAxis, gridLines, progressLine, targetLine, totalText;
 
 function initChart() {
   // set up scales
@@ -41,6 +65,11 @@ function initChart() {
 
   yAxis = g.append("g");
 
+  // gridlines group (drawn behind data)
+  gridLines = g.append("g")
+    .attr("class", "grid")
+    .attr("stroke-opacity", 0.2);
+
   // current total text (top-right, outside plotting area)
   totalText = svg.append("text")
     .attr("x", width + margin.left + margin.right - 200)
@@ -49,12 +78,13 @@ function initChart() {
     .attr("font-size", "2em")
     .attr("fill", "white");
 
-  // static target line
+  // static target line with glow
   targetLine = g.append("path")
     .attr("fill", "none")
     .attr("stroke", "#FF6F61")
     .attr("stroke-dasharray", "4 2")
-    .attr("stroke-width", 4);
+    .attr("stroke-width", 4)
+    .attr("filter", "url(#glow)");
 
   // dynamic progress worm
   progressLine = g.append("path")
@@ -67,6 +97,16 @@ function updateChart(data) {
   // recompute x domain from first data date to forced end
   const startDate = d3.min(data, d => d.date);
   xScale.domain([startDate, forcedEndDate]);
+
+  // redraw gridlines
+  gridLines.call(
+    d3.axisLeft(yScale)
+      .ticks(8)
+      .tickSize(-width)
+      .tickFormat("")
+  )
+  .selectAll("line")
+    .attr("stroke", "white");
 
   // redraw axes
   xAxis.call(
@@ -91,8 +131,8 @@ function updateChart(data) {
 
   // target line data
   const targetData = [
-    { date: startDate,       cumulative: 0 },
-    { date: forcedEndDate,   cumulative: targetTotal }
+    { date: startDate,     cumulative: 0 },
+    { date: forcedEndDate, cumulative: targetTotal }
   ];
   targetLine
     .datum(targetData)
@@ -113,6 +153,36 @@ function updateChart(data) {
       .x(d => xScale(d.date))
       .y(d => yScale(d.cumulative))
     );
+
+  // remove old tooltip target circles
+  g.selectAll(".point-circle").remove();
+
+  // add invisible circles for hover targets
+  g.selectAll(".point-circle")
+    .data(clamped)
+    .enter().append("circle")
+      .attr("class", "point-circle")
+      .attr("cx", d => xScale(d.date))
+      .attr("cy", d => yScale(d.cumulative))
+      .attr("r", 6)
+      .style("fill", "transparent")
+      .style("pointer-events", "all")
+      .on("mouseover", (event, d) => {
+        tooltip
+          .html(
+            `<strong>${d3.timeFormat("%b %-d, %Y")(d.date)}</strong><br>` +
+            `£${d3.format(",")(d.cumulative)}`
+          )
+          .style("visibility", "visible");
+      })
+      .on("mousemove", event => {
+        tooltip
+          .style("top",  (event.pageY - 10) + "px")
+          .style("left", (event.pageX + 10) + "px");
+      })
+      .on("mouseout", () => {
+        tooltip.style("visibility", "hidden");
+      });
 
   // update the current-total text
   const latest = clamped[clamped.length - 1].cumulative;
