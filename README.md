@@ -19,6 +19,8 @@ This project visualizes the fundraising progress of #TeamWater over time using a
 
 ```txt
 /
+/
+├── waterworm.py        # scraper
 ├── index.html          # Main page
 ├── assets/
 │   └── chart.js        # D3 chart logic and rendering
@@ -54,24 +56,9 @@ To deploy locally:
 
 ---
 
-## 📊 Data Format
-
-CSV file expected at `teamwater_progress.csv` with the following schema:
-
-```csv
-timestamp,amount
-2025-07-01 00:00:00,500000
-2025-07-01 05:00:00,725000
-...
-```
-
-* `timestamp`: in `YYYY-MM-DD HH:MM:SS` format
-* `amount`: integer cumulative amount in GBP (e.g. `7500000`)
-
----
-
 ## 📎 Attribution
 
 * Font: [Noto Sans](https://fonts.google.com/specimen/Noto+Sans) via Google Fonts
 * Charting: [D3.js v7](https://d3js.org/)
 * Colors & branding inspired by [WaterAid](https://www.wateraid.org/)
+* Support #TeamWater at www.teamwater.org
