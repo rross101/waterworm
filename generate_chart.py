@@ -17,8 +17,8 @@ def plot_worm_chart():
     # Sort and drop duplicates
     df = df.sort_values("timestamp").drop_duplicates()
 
-    # Calculate days since start
-    df["days_since_start"] = (df["timestamp"] - START_DATE).dt.days
+    # Calculate fractional days since start
+    df["days_since_start"] = (df["timestamp"] - START_DATE).dt.total_seconds() / 86400
     df["days_since_start"] = df["days_since_start"].clip(lower=0)
 
     # Target line
