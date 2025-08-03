@@ -2,7 +2,7 @@
 
 // select SVG and set up margins
 const svg = d3.select("#chart"),
-      margin = { top: 40, right: 100, bottom: 30, left: 50 },
+      margin = { top: 40, right: 100, bottom: 50, left: 50 },
       width  = svg.node().clientWidth  - margin.left - margin.right,
       height = svg.node().clientHeight - margin.top  - margin.bottom;
 
@@ -43,17 +43,18 @@ function initChart() {
 
   // current total text (top-right, outside plotting area)
   totalText = svg.append("text")
-    .attr("x", width + margin.left + margin.right - 100)
-    .attr("y", margin.top - 10)
+    .attr("x", width + margin.left + margin.right - 200)
+    .attr("y", margin.top)
     .attr("text-anchor", "end")
-    .attr("font-size", "64px")
+    .attr("font-size", "2em")
     .attr("fill", "white");
 
   // static target line
   targetLine = g.append("path")
     .attr("fill", "none")
     .attr("stroke", "#FF6F61")
-    .attr("stroke-dasharray", "4 2");
+    .attr("stroke-dasharray", "4 2")
+    .attr("stroke-width", 4);
 
   // dynamic progress worm
   progressLine = g.append("path")
@@ -78,13 +79,15 @@ function updateChart(data) {
       .attr("transform", "rotate(-45)")
       .attr("dx", "-0.6em")
       .attr("dy", "0.2em")
-      .style("font-size", "2em");
+      .style("font-size", "1.2em");
 
   yAxis.call(
     d3.axisLeft(yScale)
       .ticks(8)
       .tickFormat(d3.format(".2s"))
-  );
+  )
+    .selectAll("text")
+    .style("font-size", "1.5em");
 
   // target line data
   const targetData = [
