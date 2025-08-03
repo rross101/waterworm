@@ -3,14 +3,33 @@
 <head>
   <meta charset="UTF-8">
   <title>TeamWater Progress Worm Chart</title>
+
+  <!-- Noto Sans from Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;700&display=swap" rel="stylesheet">
+
   <script src="https://d3js.org/d3.v7.min.js"></script>
   <style>
-    body { font-family: sans-serif; }
-    #chart { width: 100%; height: 400px; }
+    body {
+      margin: 0;
+      padding: 0;
+      background-color: #0095CE;    /* WaterAid blue */
+      color: white;
+      font-family: 'Noto Sans', sans-serif;
+    }
+    h1 {
+      text-align: center;
+      margin: 16px 0;
+    }
+    #chart {
+      width: 100%;
+      height: 400px;
+      display: block;
+    }
   </style>
 </head>
 <body>
-  <h1>Team Progress vs. Target</h1>
+  <h1>#TeamWater Progress vs. Target</h1>
   <svg id="chart"></svg>
   <script src="assets/chart.js"></script>
 </body>
