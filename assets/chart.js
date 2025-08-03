@@ -35,50 +35,34 @@ const tooltip = d3.select("body").append("div")
   .style("visibility", "hidden");
 
 // parser for timestamp strings
-const parseTime = d3.timeParse("2025-%m-%d %H:%M:%S".replace("2025-", "%Y-"));
+const parseTime = d3.timeParse("%Y-%m-%d %H:%M:%S");
 
-// set your goal total here (40 million)
+// goal and milestones
 const targetTotal = 40_000_000;
+const milestoneSteps = [10_000_000, 20_000_000, 30_000_000];
 
-// force the x-axis to end at August 31, 2025
-const forcedEndDate = d3.timeParse("%Y-%m-%d %H:%M:%S")("2025-08-31 23:59:59");
-
-// interval in milliseconds (e.g., every 5 minutes)
+const forcedEndDate = parseTime("2025-08-31 23:59:59");
 const refreshInterval = 5 * 60 * 1000;
 
-// scales, axes and lines in outer scope
 let xScale, yScale, xAxis, yAxis, gridLines, progressLine, targetLine, totalText;
 
 function initChart() {
-  // set up scales
-  xScale = d3.scaleTime()
-             .domain([forcedEndDate, forcedEndDate]) // dummy init
-             .range([0, width]);
+  xScale = d3.scaleTime().range([0, width]);
+  yScale = d3.scaleLinear().domain([0, targetTotal]).range([height, 0]);
 
-  yScale = d3.scaleLinear()
-             .domain([0, targetTotal])
-             .range([height, 0]);
-
-  // axes groups
-  xAxis = g.append("g")
-           .attr("transform", `translate(0,${height})`);
-
+  xAxis = g.append("g").attr("transform", `translate(0,${height})`);
   yAxis = g.append("g");
+  gridLines = g.append("g").attr("class", "grid").attr("stroke-opacity", 0.2);
 
-  // gridlines group (drawn behind data)
-  gridLines = g.append("g")
-    .attr("class", "grid")
-    .attr("stroke-opacity", 0.2);
-
-  // current total text (top-right, outside plotting area)
   totalText = svg.append("text")
     .attr("x", width + margin.left + margin.right - 200)
     .attr("y", margin.top)
     .attr("text-anchor", "end")
     .attr("font-size", "2em")
-    .attr("fill", "white");
+    .attr("fill", "white")
+    .attr("font-weight", "bold")
+    .attr("text-shadow", "0 0 6px rgba(255,255,255,0.6)");
 
-  // static target line with glow
   targetLine = g.append("path")
     .attr("fill", "none")
     .attr("stroke", "#FF6F61")
@@ -86,107 +70,93 @@ function initChart() {
     .attr("stroke-width", 4)
     .attr("filter", "url(#glow)");
 
-  // dynamic progress worm
   progressLine = g.append("path")
     .attr("fill", "none")
     .attr("stroke", "white")
-    .attr("stroke-width", 6);
+    .attr("stroke-width", 6)
+    .attr("stroke-linecap", "round");
 }
 
 function updateChart(data) {
-  // recompute x domain from first data date to forced end
   const startDate = d3.min(data, d => d.date);
   xScale.domain([startDate, forcedEndDate]);
 
-  // redraw gridlines
-  gridLines.call(
-    d3.axisLeft(yScale)
-      .ticks(8)
-      .tickSize(-width)
-      .tickFormat("")
-  )
-  .selectAll("line")
-    .attr("stroke", "white");
+  gridLines.call(d3.axisLeft(yScale).ticks(8).tickSize(-width).tickFormat(""))
+    .selectAll("line")
+    .attr("stroke", "#444").attr("stroke-dasharray", "2,2");
 
-  // redraw axes
-  xAxis.call(
-    d3.axisBottom(xScale)
-      .ticks(d3.timeDay.every(5))
-      .tickFormat(d3.timeFormat("%b %-d"))
-  )
+  xAxis.call(d3.axisBottom(xScale)
+    .ticks(d3.timeDay.every(5))
+    .tickFormat(d3.timeFormat("%b %-d")))
     .selectAll("text")
-      .attr("text-anchor", "end")
-      .attr("transform", "rotate(-45)")
-      .attr("dx", "-0.6em")
-      .attr("dy", "0.2em")
-      .style("font-size", "1.2em");
+    .attr("text-anchor", "end")
+    .attr("transform", "rotate(-45)")
+    .attr("dx", "-0.6em")
+    .attr("dy", "0.2em")
+    .style("font-size", "1.2em")
+    .style("fill", "#ccc");
 
-  yAxis.call(
-    d3.axisLeft(yScale)
-      .ticks(8)
-      .tickFormat(d3.format(".2s"))
-  )
+  yAxis.call(d3.axisLeft(yScale).ticks(8).tickFormat(d3.format(".2s")))
     .selectAll("text")
-    .style("font-size", "1.5em");
+    .style("font-size", "1.5em")
+    .style("fill", "#ccc");
 
-  // target line data
   const targetData = [
-    { date: startDate,     cumulative: 0 },
+    { date: startDate, cumulative: 0 },
     { date: forcedEndDate, cumulative: targetTotal }
   ];
-  targetLine
-    .datum(targetData)
-    .attr("d", d3.line()
-      .x(d => xScale(d.date))
-      .y(d => yScale(d.cumulative))
-    );
+  targetLine.datum(targetData)
+    .attr("d", d3.line().x(d => xScale(d.date)).y(d => yScale(d.cumulative)));
 
-  // clamp and draw progress worm
   const clamped = data.map(d => ({
     date: d.date,
     cumulative: Math.min(d.cumulative, targetTotal)
   }));
-  progressLine
-    .datum(clamped)
+  progressLine.datum(clamped)
     .transition().duration(1000)
-    .attr("d", d3.line()
-      .x(d => xScale(d.date))
-      .y(d => yScale(d.cumulative))
-    );
+    .attr("d", d3.line().x(d => xScale(d.date)).y(d => yScale(d.cumulative)));
 
-  // remove old tooltip target circles
   g.selectAll(".point-circle").remove();
-
-  // add invisible circles for hover targets
   g.selectAll(".point-circle")
     .data(clamped)
     .enter().append("circle")
-      .attr("class", "point-circle")
-      .attr("cx", d => xScale(d.date))
-      .attr("cy", d => yScale(d.cumulative))
-      .attr("r", 6)
-      .style("fill", "transparent")
-      .style("pointer-events", "all")
-      .on("mouseover", (event, d) => {
-        tooltip
-          .html(
-            `<strong>${d3.timeFormat("%b %-d, %Y")(d.date)}</strong><br>` +
-            `£${d3.format(",")(d.cumulative)}`
-          )
-          .style("visibility", "visible");
-      })
-      .on("mousemove", event => {
-        tooltip
-          .style("top",  (event.pageY - 10) + "px")
-          .style("left", (event.pageX + 10) + "px");
-      })
-      .on("mouseout", () => {
-        tooltip.style("visibility", "hidden");
-      });
+    .attr("class", "point-circle")
+    .attr("cx", d => xScale(d.date))
+    .attr("cy", d => yScale(d.cumulative))
+    .attr("r", 6)
+    .style("fill", "#fff")
+    .style("opacity", 0.2)
+    .style("pointer-events", "all")
+    .on("mouseover", (event, d) => {
+      tooltip.html(`<strong>${d3.timeFormat("%b %-d, %Y")(d.date)}</strong><br>£${d3.format(",")(d.cumulative)}`)
+        .style("visibility", "visible");
+    })
+    .on("mousemove", event => {
+      tooltip.style("top", (event.pageY - 10) + "px").style("left", (event.pageX + 10) + "px");
+    })
+    .on("mouseout", () => tooltip.style("visibility", "hidden"));
 
-  // update the current-total text
+  g.selectAll(".milestone-line").remove();
+  g.selectAll(".milestone-label").remove();
+  milestoneSteps.forEach(m => {
+    g.append("line")
+      .attr("class", "milestone-line")
+      .attr("x1", 0).attr("x2", width)
+      .attr("y1", yScale(m)).attr("y2", yScale(m))
+      .attr("stroke", "#aaa")
+      .attr("stroke-dasharray", "2,2");
+    g.append("text")
+      .attr("class", "milestone-label")
+      .attr("x", width - 5)
+      .attr("y", yScale(m) - 6)
+      .attr("text-anchor", "end")
+      .attr("fill", "#aaa")
+      .attr("font-size", "0.9em")
+      .text(`£${m / 1e6}M milestone`);
+  });
+
   const latest = clamped[clamped.length - 1].cumulative;
-  totalText.text(`Current total: ${d3.format(",")(latest)}`);
+  totalText.text(`Current total: £${d3.format(",")(latest)}`);
 }
 
 function fetchAndRender() {
@@ -204,7 +174,6 @@ function fetchAndRender() {
   .catch(err => console.error("Error loading CSV:", err));
 }
 
-// initialize chart and start polling
 d3.csv("teamwater_progress.csv", row => ({
   date: parseTime(row.timestamp),
   amount: +row.amount
