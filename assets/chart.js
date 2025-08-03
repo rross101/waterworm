@@ -77,7 +77,7 @@ function updateChart(data) {
       .attr("text-anchor", "end")
       .attr("transform", "rotate(-45)")
       .attr("dx", "-0.6em")
-      .attr("dy", "0.2em");
+      .attr("dy", "0.2em")
       .style("font-size", "2em");
 
   yAxis.call(
