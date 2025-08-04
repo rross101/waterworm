@@ -132,9 +132,9 @@ function updateChart(data) {
     .attr("class", "point-circle")
     .attr("cx", d => xScale(d.date))
     .attr("cy", d => yScale(d.cumulative))
-    .attr("r", 6)
+    .attr("r", 4)
     .style("fill", "#fff")
-    .style("opacity", 0.2)
+    .style("opacity", 1)
     .style("pointer-events", "all")
     .on("mouseover", (event, d) => {
       tooltip.html(`<strong>${d3.timeFormat("%b %-d, %Y")(d.date)}</strong><br>${formatCurrency(d.cumulative)}`)
