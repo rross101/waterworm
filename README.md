@@ -1,6 +1,6 @@
 # TeamWater Progress Worm
 
-This project visualizes the fundraising progress of #TeamWater over time using a dynamic D3.js chart. It updates every 10 minutes using a CSV data source from `teamwater.org`, and is styled to align with WaterAid's brand.
+This project visualizes the fundraising progress of #TeamWater over time using a dynamic D3.js chart. It updates every 10 minutes using a CSV data source it scrapes from `teamwater.org`, and is styled to align with WaterAid's brand.
 
 ---
 
