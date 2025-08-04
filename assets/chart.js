@@ -44,6 +44,15 @@ const milestoneSteps = [10_000_000, 20_000_000, 30_000_000];
 const forcedEndDate = parseTime("2025-08-31 23:59:59");
 const refreshInterval = 5 * 60 * 1000;
 
+// enforce US formatting with dollar sign
+const usLocale = d3.formatLocale({
+  decimal: ".",
+  thousands: ",",
+  grouping: [3],
+  currency: ["$", ""]
+});
+const formatCurrency = usLocale.format("$,.0f");
+
 let xScale, yScale, xAxis, yAxis, gridLines, progressLine, targetLine, totalText;
 
 function initChart() {
@@ -96,7 +105,7 @@ function updateChart(data) {
     .style("font-size", "1.2em")
     .style("fill", "#ccc");
 
-  yAxis.call(d3.axisLeft(yScale).ticks(8).tickFormat(d3.format(".2s")))
+  yAxis.call(d3.axisLeft(yScale).ticks(8).tickFormat(usLocale.format(".2s")))
     .selectAll("text")
     .style("font-size", "1.5em")
     .style("fill", "#ccc");
@@ -128,7 +137,7 @@ function updateChart(data) {
     .style("opacity", 0.2)
     .style("pointer-events", "all")
     .on("mouseover", (event, d) => {
-      tooltip.html(`<strong>${d3.timeFormat("%b %-d, %Y")(d.date)}</strong><br>£${d3.format(",")(d.cumulative)}`)
+      tooltip.html(`<strong>${d3.timeFormat("%b %-d, %Y")(d.date)}</strong><br>${formatCurrency(d.cumulative)}`)
         .style("visibility", "visible");
     })
     .on("mousemove", event => {
@@ -152,11 +161,11 @@ function updateChart(data) {
       .attr("text-anchor", "end")
       .attr("fill", "#aaa")
       .attr("font-size", "0.9em")
-      .text(`£${m / 1e6}M milestone`);
+      .text(`${formatCurrency(m)} milestone`);
   });
 
   const latest = clamped[clamped.length - 1].cumulative;
-  totalText.text(`Current total: £${d3.format(",")(latest)}`);
+  totalText.text(`Current total: ${formatCurrency(latest)}`);
 }
 
 function fetchAndRender() {
