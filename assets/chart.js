@@ -174,7 +174,7 @@ function fetchAndRender() {
     amount: +row.amount
   }))
   .then(raw => {
-    const clean = raw.filter(d => d.date instanceof Date && !isNaN(d.date));
+    const clean = raw.filter(d => d.date instanceof Date && !isNaN(d.date) && !isNaN(d.amount));
     const data = clean
       .sort((a, b) => a.date - b.date)
       .map(d => ({ date: d.date, cumulative: d.amount }));
@@ -183,6 +183,7 @@ function fetchAndRender() {
   .catch(err => console.error("Error loading CSV:", err));
 }
 
+initChart();
 d3.csv("teamwater_progress.csv", row => ({
   date: parseTime(row.timestamp),
   amount: +row.amount
