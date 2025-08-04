@@ -137,7 +137,7 @@ function updateChart(data) {
     .style("opacity", 1)
     .style("pointer-events", "all")
     .on("mouseover", (event, d) => {
-      tooltip.html(`<strong>${d3.timeFormat("%b %-d, %Y")(d.date)}</strong><br>${formatCurrency(d.cumulative)}`)
+      tooltip.html(`<strong>${d3.timeFormat("%b %-d, %Y at %-I:%M %p")(d.date)}</strong><br>${formatCurrency(d.cumulative)}`)
         .style("visibility", "visible");
     })
     .on("mousemove", event => {
