@@ -89,7 +89,9 @@ function initChart() {
 
 function updateChart(data) {
   const startDate = d3.min(data, d => d.date);
-  xScale.domain([startDate, forcedEndDate]);
+  const lastDate = d3.max(data, d => d.date);
+  const endDate = lastDate > forcedEndDate ? lastDate : forcedEndDate;
+  xScale.domain([startDate, endDate]);
 
   // Dynamically set Y domain to accommodate data beyond the target
   const maxDataValue = d3.max(data, d => d.cumulative) || 0;
