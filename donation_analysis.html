@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TeamWater Donation Analysis</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .chart {
+            margin: 20px 0;
+        }
+        .axis {
+            font-size: 12px;
+        }
+        .grid line {
+            stroke: lightgrey;
+            stroke-opacity: 0.7;
+            shape-rendering: crispEdges;
+        }
+        .tooltip {
+            position: absolute;
+            text-align: center;
+            padding: 8px;
+            font-size: 12px;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            border-radius: 4px;
+            pointer-events: none;
+            visibility: hidden;
+        }
+        h1, h2 {
+            color: #333;
+            text-align: center;
+        }
+        .stats {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+        .stats h3 {
+            margin-top: 0;
+            color: #0095CE;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>TeamWater Donation Analysis</h1>
+        
+        <div class="stats">
+            <h3>Key Statistics</h3>
+            <p><strong>Total Raised:</strong> $11,686,302</p>
+            <p><strong>Large Donations (>$25,518):</strong> $10,821,521 (22 donations)</p>
+            <p><strong>Regular Donations:</strong> $864,781 (408 donations)</p>
+            <p><strong>Underlying Trend Total:</strong> $884,647</p>
+        </div>
+
+        <h2>Original vs. Filtered Progress</h2>
+        <div id="comparison-chart" class="chart"></div>
+        
+        <h2>Individual Donation Amounts</h2>
+        <div id="scatter-chart" class="chart"></div>
+    </div>
+
+    <div class="tooltip" id="tooltip"></div>
+
+    <script>
+        // Set up dimensions and margins
+        const margin = {top: 20, right: 80, bottom: 50, left: 80};
+        const width = 1000 - margin.left - margin.right;
+        const height = 400 - margin.bottom - margin.top;
+
+        // Parse the date / time
+        const parseTime = d3.timeParse("%Y-%m-%d %H:%M:%S");
+        const formatCurrency = d3.format("$,.0f");
+        const formatTime = d3.timeFormat("%m/%d %H:%M");
+
+        // Load and process data
+        d3.csv("teamwater_progress.csv").then(function(data) {
+            // Process data
+            data.forEach((d, i) => {
+                d.timestamp = parseTime(d.timestamp);
+                d.amount = +d.amount;
+                d.incremental = i === 0 ? 0 : d.amount - data[i-1].amount;
+            });
+
+            // Identify large donations (threshold from Python analysis)
+            const largeThreshold = 25518.40;
+            data.forEach(d => {
+                d.isLarge = d.incremental > largeThreshold;
+            });
+
+            // Create filtered data
+            const medianIncrement = 903; // From Python analysis
+            let filteredAmount = 0;
+            const filteredData = data.map((d, i) => {
+                if (i === 0) {
+                    filteredAmount = d.amount;
+                } else {
+                    const increment = d.isLarge ? medianIncrement : d.incremental;
+                    filteredAmount += increment;
+                }
+                return {
+                    timestamp: d.timestamp,
+                    amount: d.amount,
+                    filteredAmount: filteredAmount,
+                    incremental: d.incremental,
+                    isLarge: d.isLarge
+                };
+            });
+
+            createComparisonChart(filteredData);
+            createScatterChart(filteredData);
+        });
+
+        function createComparisonChart(data) {
+            const svg = d3.select("#comparison-chart")
+                .append("svg")
+                .attr("width", width + margin.left + margin.right)
+                .attr("height", height + margin.top + margin.bottom);
+
+            const g = svg.append("g")
+                .attr("transform", `translate(${margin.left},${margin.top})`);
+
+            // Set scales
+            const xScale = d3.scaleTime()
+                .domain(d3.extent(data, d => d.timestamp))
+                .range([0, width]);
+
+            const yScale = d3.scaleLinear()
+                .domain([0, d3.max(data, d => d.amount)])
+                .range([height, 0]);
+
+            // Add grid lines
+            g.append("g")
+                .attr("class", "grid")
+                .attr("transform", `translate(0,${height})`)
+                .call(d3.axisBottom(xScale)
+                    .tickSize(-height)
+                    .tickFormat(""));
+
+            g.append("g")
+                .attr("class", "grid")
+                .call(d3.axisLeft(yScale)
+                    .tickSize(-width)
+                    .tickFormat(""));
+
+            // Add axes
+            g.append("g")
+                .attr("class", "axis")
+                .attr("transform", `translate(0,${height})`)
+                .call(d3.axisBottom(xScale).tickFormat(d3.timeFormat("%m/%d")));
+
+            g.append("g")
+                .attr("class", "axis")
+                .call(d3.axisLeft(yScale).tickFormat(formatCurrency));
+
+            // Line generators
+            const line = d3.line()
+                .x(d => xScale(d.timestamp))
+                .y(d => yScale(d.amount));
+
+            const filteredLine = d3.line()
+                .x(d => xScale(d.timestamp))
+                .y(d => yScale(d.filteredAmount));
+
+            // Add lines
+            g.append("path")
+                .datum(data)
+                .attr("fill", "none")
+                .attr("stroke", "#0095CE")
+                .attr("stroke-width", 2)
+                .attr("d", line);
+
+            g.append("path")
+                .datum(data)
+                .attr("fill", "none")
+                .attr("stroke", "#28a745")
+                .attr("stroke-width", 2)
+                .attr("stroke-dasharray", "5,5")
+                .attr("d", filteredLine);
+
+            // Add legend
+            const legend = g.append("g")
+                .attr("transform", `translate(${width - 200}, 20)`);
+
+            legend.append("line")
+                .attr("x1", 0).attr("x2", 20)
+                .attr("y1", 0).attr("y2", 0)
+                .attr("stroke", "#0095CE")
+                .attr("stroke-width", 2);
+
+            legend.append("text")
+                .attr("x", 25).attr("y", 5)
+                .text("Original Data")
+                .style("font-size", "12px");
+
+            legend.append("line")
+                .attr("x1", 0).attr("x2", 20)
+                .attr("y1", 20).attr("y2", 20)
+                .attr("stroke", "#28a745")
+                .attr("stroke-width", 2)
+                .attr("stroke-dasharray", "5,5");
+
+            legend.append("text")
+                .attr("x", 25).attr("y", 25)
+                .text("Filtered (Underlying Trend)")
+                .style("font-size", "12px");
+
+            // Add axis labels
+            g.append("text")
+                .attr("transform", "rotate(-90)")
+                .attr("y", 0 - margin.left)
+                .attr("x", 0 - (height / 2))
+                .attr("dy", "1em")
+                .style("text-anchor", "middle")
+                .text("Total Amount ($)");
+
+            g.append("text")
+                .attr("transform", `translate(${width / 2}, ${height + margin.bottom})`)
+                .style("text-anchor", "middle")
+                .text("Date");
+        }
+
+        function createScatterChart(data) {
+            const svg = d3.select("#scatter-chart")
+                .append("svg")
+                .attr("width", width + margin.left + margin.right)
+                .attr("height", height + margin.top + margin.bottom);
+
+            const g = svg.append("g")
+                .attr("transform", `translate(${margin.left},${margin.top})`);
+
+            // Set scales
+            const xScale = d3.scaleTime()
+                .domain(d3.extent(data, d => d.timestamp))
+                .range([0, width]);
+
+            const yScale = d3.scaleLinear()
+                .domain([0, d3.max(data, d => d.incremental)])
+                .range([height, 0]);
+
+            // Add grid lines
+            g.append("g")
+                .attr("class", "grid")
+                .attr("transform", `translate(0,${height})`)
+                .call(d3.axisBottom(xScale)
+                    .tickSize(-height)
+                    .tickFormat(""));
+
+            g.append("g")
+                .attr("class", "grid")
+                .call(d3.axisLeft(yScale)
+                    .tickSize(-width)
+                    .tickFormat(""));
+
+            // Add axes
+            g.append("g")
+                .attr("class", "axis")
+                .attr("transform", `translate(0,${height})`)
+                .call(d3.axisBottom(xScale).tickFormat(d3.timeFormat("%m/%d")));
+
+            g.append("g")
+                .attr("class", "axis")
+                .call(d3.axisLeft(yScale).tickFormat(formatCurrency));
+
+            // Add tooltip
+            const tooltip = d3.select("#tooltip");
+
+            // Add points
+            g.selectAll(".dot-regular")
+                .data(data.filter(d => !d.isLarge && d.incremental > 0))
+                .enter().append("circle")
+                .attr("class", "dot-regular")
+                .attr("cx", d => xScale(d.timestamp))
+                .attr("cy", d => yScale(d.incremental))
+                .attr("r", 3)
+                .style("fill", "#0095CE")
+                .style("opacity", 0.6)
+                .on("mouseover", function(event, d) {
+                    tooltip.style("visibility", "visible")
+                        .html(`<strong>${formatTime(d.timestamp)}</strong><br>Amount: ${formatCurrency(d.incremental)}`);
+                })
+                .on("mousemove", function(event) {
+                    tooltip.style("top", (event.pageY - 10) + "px")
+                        .style("left", (event.pageX + 10) + "px");
+                })
+                .on("mouseout", function() {
+                    tooltip.style("visibility", "hidden");
+                });
+
+            g.selectAll(".dot-large")
+                .data(data.filter(d => d.isLarge))
+                .enter().append("circle")
+                .attr("class", "dot-large")
+                .attr("cx", d => xScale(d.timestamp))
+                .attr("cy", d => yScale(d.incremental))
+                .attr("r", 6)
+                .style("fill", "#dc3545")
+                .style("opacity", 0.8)
+                .on("mouseover", function(event, d) {
+                    tooltip.style("visibility", "visible")
+                        .html(`<strong>${formatTime(d.timestamp)}</strong><br>Large Donation: ${formatCurrency(d.incremental)}`);
+                })
+                .on("mousemove", function(event) {
+                    tooltip.style("top", (event.pageY - 10) + "px")
+                        .style("left", (event.pageX + 10) + "px");
+                })
+                .on("mouseout", function() {
+                    tooltip.style("visibility", "hidden");
+                });
+
+            // Add legend
+            const legend = g.append("g")
+                .attr("transform", `translate(${width - 200}, 20)`);
+
+            legend.append("circle")
+                .attr("cx", 10).attr("cy", 0).attr("r", 3)
+                .style("fill", "#0095CE");
+
+            legend.append("text")
+                .attr("x", 20).attr("y", 5)
+                .text("Regular Donations")
+                .style("font-size", "12px");
+
+            legend.append("circle")
+                .attr("cx", 10).attr("cy", 20).attr("r", 6)
+                .style("fill", "#dc3545");
+
+            legend.append("text")
+                .attr("x", 20).attr("y", 25)
+                .text("Large Donations (>$25,518)")
+                .style("font-size", "12px");
+
+            // Add axis labels
+            g.append("text")
+                .attr("transform", "rotate(-90)")
+                .attr("y", 0 - margin.left)
+                .attr("x", 0 - (height / 2))
+                .attr("dy", "1em")
+                .style("text-anchor", "middle")
+                .text("Donation Amount ($)");
+
+            g.append("text")
+                .attr("transform", `translate(${width / 2}, ${height + margin.bottom})`)
+                .style("text-anchor", "middle")
+                .text("Date");
+        }
+    </script>
+</body>
+</html>

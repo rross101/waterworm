@@ -57,7 +57,8 @@ let xScale, yScale, xAxis, yAxis, gridLines, progressLine, targetLine, totalText
 
 function initChart() {
   xScale = d3.scaleTime().range([0, width]);
-  yScale = d3.scaleLinear().domain([0, targetTotal]).range([height, 0]);
+  // y-domain is set dynamically in updateChart based on data
+  yScale = d3.scaleLinear().range([height, 0]);
 
   xAxis = g.append("g").attr("transform", `translate(0,${height})`);
   yAxis = g.append("g");
@@ -90,6 +91,11 @@ function updateChart(data) {
   const startDate = d3.min(data, d => d.date);
   xScale.domain([startDate, forcedEndDate]);
 
+  // Dynamically set Y domain to accommodate data beyond the target
+  const maxDataValue = d3.max(data, d => d.cumulative) || 0;
+  const yMax = Math.max(targetTotal, maxDataValue) * 1.05; // add 5% headroom
+  yScale.domain([0, yMax]);
+
   gridLines.call(d3.axisLeft(yScale).ticks(8).tickSize(-width).tickFormat(""))
     .selectAll("line")
     .attr("stroke", "#444").attr("stroke-dasharray", "2,2");
@@ -117,17 +123,14 @@ function updateChart(data) {
   targetLine.datum(targetData)
     .attr("d", d3.line().x(d => xScale(d.date)).y(d => yScale(d.cumulative)));
 
-  const clamped = data.map(d => ({
-    date: d.date,
-    cumulative: Math.min(d.cumulative, targetTotal)
-  }));
-  progressLine.datum(clamped)
+  // Plot the actual data without clamping to the target
+  progressLine.datum(data)
     .transition().duration(1000)
     .attr("d", d3.line().x(d => xScale(d.date)).y(d => yScale(d.cumulative)));
 
   g.selectAll(".point-circle").remove();
   g.selectAll(".point-circle")
-    .data(clamped)
+    .data(data)
     .enter().append("circle")
     .attr("class", "point-circle")
     .attr("cx", d => xScale(d.date))
@@ -164,7 +167,7 @@ function updateChart(data) {
       .text(`${formatCurrency(m)} milestone`);
   });
 
-  const latest = clamped[clamped.length - 1].cumulative;
+  const latest = data[data.length - 1].cumulative;
   totalText.text(`Current total: ${formatCurrency(latest)}`);
 }
 
